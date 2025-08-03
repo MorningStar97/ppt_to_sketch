@@ -1,10 +1,40 @@
 # PPT to Sketch 转换服务
 
-🎨 一个基于 Django 的 Web 服务，可以将 PowerPoint 文件（.ppt/.pptx）转换为 Sketch 文件（.sketch）。
+🎨 一个基于Django的PPT到Sketch转换服务，支持高保真度转换，包含Web界面和RESTful API
 
-![Python](https://img.shields.io/badge/Python-3.8+-blue.svg)
-![Django](https://img.shields.io/badge/Django-4.2+-green.svg)
-![License](https://img.shields.io/badge/License-MIT-yellow.svg)
+## 🌿 分支选择指南
+
+**请根据您的使用场景选择正确的分支：**
+
+### 🔧 本地开发 ➡️ `develop` 分支
+```bash
+git clone -b develop https://github.com/MorningStar97/ppt_to_sketch.git
+cd ppt_to_sketch
+./start.sh  # 一键启动本地开发环境
+```
+- ✅ SQLite数据库，轻量级
+- ✅ 一键启动脚本
+- ✅ 调试模式开启
+- ✅ 端口冲突自动处理
+
+### 🚀 云服务器部署 ➡️ `production` 分支
+```bash
+# 在ECS服务器上一键部署
+curl -sSL https://raw.githubusercontent.com/MorningStar97/ppt_to_sketch/production/quick_deploy.sh | bash
+```
+- ✅ Docker容器化部署
+- ✅ PostgreSQL + Redis
+- ✅ Nginx反向代理
+- ✅ 生产环境优化
+
+### 📚 查看文档 ➡️ `main` 分支（当前）
+- 📋 项目概述和功能介绍
+- 🌿 完整分支管理策略
+- 📖 使用指南和API文档
+
+> 💡 **重要提示**: `main` 分支是稳定基线，不包含特定环境的配置文件。请根据您的需求选择 `develop` 或 `production` 分支。
+
+---
 
 ## ✨ 功能特性
 
