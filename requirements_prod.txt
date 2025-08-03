@@ -1,0 +1,46 @@
+# PPT to Sketch Service - Production Requirements
+
+# Core Django dependencies
+Django==4.2.7
+djangorestframework==3.14.0
+django-cors-headers==4.3.1
+
+# Database
+psycopg2-binary==2.9.9  # PostgreSQL adapter
+django-redis==5.4.0     # Redis cache backend
+
+# PPT processing
+python-pptx==0.6.21
+
+# Image processing
+Pillow==10.1.0
+
+# Web server
+gunicorn==21.2.0
+gevent==23.9.1           # Async worker class for better performance
+
+# Task queue (optional)
+celery==5.3.4
+redis==5.0.1
+
+# Security
+django-secure==1.0.2
+django-csp==3.7         # Content Security Policy
+
+# Monitoring and logging
+sentry-sdk[django]==1.38.0  # Error tracking
+django-extensions==3.2.3    # Useful development tools
+
+# Environment management
+python-decouple==3.8    # Environment variables
+python-dotenv==1.0.0    # .env file support
+
+# Performance
+django-compression-middleware==0.4.1  # Response compression
+whitenoise==6.6.0       # Static files serving
+
+# Health checks
+django-health-check==3.17.0
+
+# API documentation (optional)
+drf-spectacular==0.26.5  # OpenAPI 3.0 schema generation 
