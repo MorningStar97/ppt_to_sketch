@@ -1,0 +1,114 @@
+{% extends 'converter/base.html' %}
+{% load static %}
+
+{% block title %}任务列表 - PPT 转 Sketch 服务{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>
+        <i class="bi bi-list-task"></i>
+        转换任务列表
+    </h2>
+    <a href="{% url 'converter:index' %}" class="btn btn-primary">
+        <i class="bi bi-plus-circle"></i>
+        新建任务
+    </a>
+</div>
+
+{% if tasks %}
+    <div class="row">
+        {% for task in tasks %}
+            <div class="col-md-6 col-lg-4 mb-4">
+                <div class="card h-100 shadow-sm">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <small class="text-muted">任务 ID: {{ task.id|slice:":8" }}...</small>
+                        {% if task.status == 'pending' %}
+                            <span class="badge bg-warning">
+                                <i class="bi bi-clock"></i> 等待中
+                            </span>
+                        {% elif task.status == 'processing' %}
+                            <span class="badge bg-info">
+                                <i class="bi bi-gear-fill spin"></i> 处理中
+                            </span>
+                        {% elif task.status == 'completed' %}
+                            <span class="badge bg-success">
+                                <i class="bi bi-check-circle"></i> 已完成
+                            </span>
+                        {% elif task.status == 'failed' %}
+                            <span class="badge bg-danger">
+                                <i class="bi bi-x-circle"></i> 失败
+                            </span>
+                        {% endif %}
+                    </div>
+                    <div class="card-body">
+                        <h5 class="card-title">
+                            <i class="bi bi-file-earmark-slides"></i>
+                            {{ task.ppt_filename|default:"PPT 文件" }}
+                        </h5>
+                        <p class="card-text">
+                            <small class="text-muted">
+                                创建时间: {{ task.created_at|date:"Y-m-d H:i" }}
+                            </small>
+                        </p>
+                        {% if task.error_message %}
+                            <div class="alert alert-danger alert-sm">
+                                <small>{{ task.error_message }}</small>
+                            </div>
+                        {% endif %}
+                    </div>
+                    <div class="card-footer">
+                        <div class="btn-group w-100" role="group">
+                            <a href="{% url 'converter:task-detail' task.id %}" class="btn btn-outline-primary">
+                                <i class="bi bi-eye"></i> 查看
+                            </a>
+                            {% if task.status == 'completed' and task.sketch_file %}
+                                <a href="/api/tasks/{{ task.id }}/download/" class="btn btn-success">
+                                    <i class="bi bi-download"></i> 下载
+                                </a>
+                            {% endif %}
+                            <button type="button" class="btn btn-outline-danger" 
+                                    onclick="deleteTask('{{ task.id }}')">
+                                <i class="bi bi-trash"></i> 删除
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+{% else %}
+    <div class="text-center py-5">
+        <i class="bi bi-inbox display-1 text-muted"></i>
+        <h3 class="mt-3 text-muted">暂无转换任务</h3>
+        <p class="text-muted">点击上方按钮创建您的第一个转换任务</p>
+        <a href="{% url 'converter:index' %}" class="btn btn-primary">
+            <i class="bi bi-plus-circle"></i>
+            开始转换
+        </a>
+    </div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+async function deleteTask(taskId) {
+    if (!confirm('确定要删除这个任务吗？')) {
+        return;
+    }
+    
+    try {
+        const response = await fetch(`/api/tasks/${taskId}/delete/`, {
+            method: 'DELETE'
+        });
+        
+        if (response.ok) {
+            location.reload();
+        } else {
+            alert('删除失败，请重试');
+        }
+    } catch (error) {
+        alert('删除失败，请重试');
+    }
+}
+</script>
+{% endblock %} 

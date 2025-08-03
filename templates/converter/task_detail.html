@@ -1,0 +1,159 @@
+{% extends 'converter/base.html' %}
+{% load static %}
+
+{% block title %}任务详情 - PPT 转 Sketch 服务{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8 mx-auto">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2>
+                <i class="bi bi-info-circle"></i>
+                任务详情
+            </h2>
+            <a href="{% url 'converter:task-list' %}" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left"></i>
+                返回列表
+            </a>
+        </div>
+
+        <div class="card shadow-lg">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h4 class="mb-0">
+                    <i class="bi bi-file-earmark-slides"></i>
+                    {{ task.ppt_filename|default:"PPT 文件" }}
+                </h4>
+                {% if task.status == 'pending' %}
+                    <span class="badge bg-warning fs-6">
+                        <i class="bi bi-clock"></i> 等待中
+                    </span>
+                {% elif task.status == 'processing' %}
+                    <span class="badge bg-info fs-6">
+                        <i class="bi bi-gear-fill spin"></i> 处理中
+                    </span>
+                {% elif task.status == 'completed' %}
+                    <span class="badge bg-success fs-6">
+                        <i class="bi bi-check-circle"></i> 已完成
+                    </span>
+                {% elif task.status == 'failed' %}
+                    <span class="badge bg-danger fs-6">
+                        <i class="bi bi-x-circle"></i> 失败
+                    </span>
+                {% endif %}
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h5>基本信息</h5>
+                        <table class="table table-borderless">
+                            <tr>
+                                <td><strong>任务 ID:</strong></td>
+                                <td><code>{{ task.id }}</code></td>
+                            </tr>
+                            <tr>
+                                <td><strong>状态:</strong></td>
+                                <td>{{ task.get_status_display }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>创建时间:</strong></td>
+                                <td>{{ task.created_at|date:"Y-m-d H:i:s" }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>更新时间:</strong></td>
+                                <td>{{ task.updated_at|date:"Y-m-d H:i:s" }}</td>
+                            </tr>
+                        </table>
+                    </div>
+                    <div class="col-md-6">
+                        <h5>文件信息</h5>
+                        <table class="table table-borderless">
+                            <tr>
+                                <td><strong>原始文件:</strong></td>
+                                <td>{{ task.ppt_filename }}</td>
+                            </tr>
+                            {% if task.sketch_file %}
+                            <tr>
+                                <td><strong>输出文件:</strong></td>
+                                <td>{{ task.sketch_filename }}</td>
+                            </tr>
+                            {% endif %}
+                        </table>
+                    </div>
+                </div>
+
+                {% if task.error_message %}
+                    <div class="alert alert-danger mt-3">
+                        <h6><i class="bi bi-exclamation-triangle"></i> 错误信息</h6>
+                        <p class="mb-0">{{ task.error_message }}</p>
+                    </div>
+                {% endif %}
+
+                {% if task.status == 'processing' %}
+                    <div class="alert alert-info mt-3">
+                        <h6><i class="bi bi-gear-fill spin"></i> 处理中</h6>
+                        <p class="mb-0">您的文件正在转换中，请稍候...</p>
+                        <div class="progress mt-2">
+                            <div class="progress-bar progress-bar-striped progress-bar-animated" 
+                                 role="progressbar" style="width: 100%"></div>
+                        </div>
+                    </div>
+                {% elif task.status == 'completed' %}
+                    <div class="alert alert-success mt-3">
+                        <h6><i class="bi bi-check-circle"></i> 转换完成</h6>
+                        <p class="mb-0">您的文件已成功转换为 Sketch 格式！</p>
+                    </div>
+                {% endif %}
+            </div>
+            <div class="card-footer">
+                <div class="btn-group w-100" role="group">
+                    {% if task.status == 'completed' and task.sketch_file %}
+                        <a href="/api/tasks/{{ task.id }}/download/" class="btn btn-success btn-lg">
+                            <i class="bi bi-download"></i>
+                            下载 Sketch 文件
+                        </a>
+                    {% endif %}
+                    <button type="button" class="btn btn-outline-danger" 
+                            onclick="deleteTask('{{ task.id }}')">
+                        <i class="bi bi-trash"></i>
+                        删除任务
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 自动刷新状态 -->
+{% if task.status == 'pending' or task.status == 'processing' %}
+<script>
+// 每5秒刷新一次页面来更新状态
+setTimeout(function() {
+    location.reload();
+}, 5000);
+</script>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+async function deleteTask(taskId) {
+    if (!confirm('确定要删除这个任务吗？')) {
+        return;
+    }
+    
+    try {
+        const response = await fetch(`/api/tasks/${taskId}/delete/`, {
+            method: 'DELETE'
+        });
+        
+        if (response.ok) {
+            window.location.href = '{% url "converter:task-list" %}';
+        } else {
+            alert('删除失败，请重试');
+        }
+    } catch (error) {
+        alert('删除失败，请重试');
+    }
+}
+</script>
+{% endblock %} 

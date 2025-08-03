@@ -1,0 +1,138 @@
+{% extends 'converter/base.html' %}
+{% load static %}
+
+{% block title %}首页 - PPT 转 Sketch 服务{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8 mx-auto">
+        <div class="text-center mb-5">
+            <h1 class="display-4 fw-bold text-primary">
+                <i class="bi bi-magic"></i>
+                PPT 转 Sketch 服务
+            </h1>
+            <p class="lead text-muted">
+                将您的 PowerPoint 演示文稿快速转换为 Sketch 设计文件
+            </p>
+        </div>
+
+        <div class="card shadow-lg">
+            <div class="card-header bg-primary text-white">
+                <h3 class="card-title mb-0">
+                    <i class="bi bi-cloud-upload"></i>
+                    上传 PPT 文件
+                </h3>
+            </div>
+            <div class="card-body">
+                <form id="uploadForm" enctype="multipart/form-data">
+                    <div class="mb-3">
+                        <label for="pptFile" class="form-label">选择 PPT 文件</label>
+                        <input type="file" class="form-control" id="pptFile" name="ppt_file" 
+                               accept=".ppt,.pptx" required>
+                        <div class="form-text">
+                            支持 .ppt 和 .pptx 格式，最大文件大小 50MB
+                        </div>
+                    </div>
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary btn-lg" id="uploadBtn">
+                            <i class="bi bi-upload"></i>
+                            开始转换
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div id="uploadProgress" class="mt-4" style="display: none;">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">
+                        <i class="bi bi-gear-fill spin"></i>
+                        转换进行中...
+                    </h5>
+                    <div class="progress">
+                        <div class="progress-bar progress-bar-striped progress-bar-animated" 
+                             role="progressbar" style="width: 100%"></div>
+                    </div>
+                    <p class="mt-2 text-muted">请稍候，我们正在处理您的文件...</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="row mt-5">
+            <div class="col-md-4">
+                <div class="text-center">
+                    <i class="bi bi-file-earmark-slides display-1 text-primary"></i>
+                    <h4>上传 PPT</h4>
+                    <p class="text-muted">支持多种 PowerPoint 格式</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="text-center">
+                    <i class="bi bi-arrow-right display-1 text-success"></i>
+                    <h4>自动转换</h4>
+                    <p class="text-muted">智能解析并转换为 Sketch 格式</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="text-center">
+                    <i class="bi bi-download display-1 text-info"></i>
+                    <h4>下载结果</h4>
+                    <p class="text-muted">获取可编辑的 Sketch 文件</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.getElementById('uploadForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData();
+    const fileInput = document.getElementById('pptFile');
+    const file = fileInput.files[0];
+    
+    if (!file) {
+        alert('请选择一个文件');
+        return;
+    }
+    
+    formData.append('ppt_file', file);
+    
+    // 显示进度条
+    document.getElementById('uploadProgress').style.display = 'block';
+    document.getElementById('uploadBtn').disabled = true;
+    
+    try {
+        const response = await fetch('/api/tasks/', {
+            method: 'POST',
+            body: formData
+        });
+        
+        if (response.ok) {
+            const data = await response.json();
+            console.log('Task created:', data); // 调试信息
+            
+            // 检查是否有有效的 ID
+            if (data.id) {
+                // 跳转到任务详情页面
+                window.location.href = `/tasks/${data.id}/`;
+            } else {
+                throw new Error('服务器响应中缺少任务 ID');
+            }
+        } else {
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(errorData.detail || errorData.error || `服务器错误: ${response.status}`);
+        }
+    } catch (error) {
+        console.error('Upload error:', error); // 调试信息
+        alert(`上传失败: ${error.message}`);
+        document.getElementById('uploadProgress').style.display = 'none';
+        document.getElementById('uploadBtn').disabled = false;
+    }
+});
+</script>
+{% endblock %} 
