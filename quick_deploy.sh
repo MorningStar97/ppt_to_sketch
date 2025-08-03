@@ -42,10 +42,11 @@ cd /opt
 if [ -d "ppt_to_sketch" ]; then
     echo "📁 项目目录已存在，更新代码..."
     cd ppt_to_sketch
-    git pull origin main
+    git checkout production
+    git pull origin production
 else
     echo "📁 克隆项目代码..."
-    git clone https://github.com/MorningStar97/ppt_to_sketch.git
+    git clone -b production https://github.com/MorningStar97/ppt_to_sketch.git
     cd ppt_to_sketch
 fi
 
