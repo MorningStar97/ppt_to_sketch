@@ -17,9 +17,23 @@ fi
 # 1. 环境检查和准备
 echo "📋 1. 检查系统环境..."
 
+# 检查操作系统
+if ! command -v yum &> /dev/null && ! command -v apt-get &> /dev/null; then
+    echo "❌ 不支持的操作系统，需要CentOS/RHEL或Ubuntu/Debian"
+    exit 1
+fi
+
+# 检查网络连接
+if ! ping -c 1 github.com &> /dev/null; then
+    echo "⚠️ 网络连接可能有问题，但继续尝试..."
+fi
+
 # 检查Docker
 if ! command -v docker &> /dev/null; then
     echo "❌ Docker 未安装，请先安装Docker"
+    echo "💡 安装命令："
+    echo "   CentOS/RHEL: yum install -y docker"
+    echo "   Ubuntu/Debian: apt-get install -y docker.io"
     exit 1
 fi
 
@@ -211,8 +225,17 @@ EOF
 
 # 7. 生成密钥和密码
 echo "🔐 7. 生成安全密钥..."
-SECRET_KEY=$(python3 -c "from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())")
+
+# 使用openssl生成密钥，避免依赖Django
+SECRET_KEY=$(openssl rand -base64 50 | tr -d "=+/" | cut -c1-50)
 DB_PASSWORD=$(openssl rand -base64 32 | tr -d "=+/" | cut -c1-25)
+
+# 验证密钥生成是否成功
+if [ -z "$SECRET_KEY" ] || [ -z "$DB_PASSWORD" ]; then
+    echo "❌ 密钥生成失败，使用备用方法..."
+    SECRET_KEY="backup-$(date +%s)-$(shuf -i 10000-99999 -n 1)-secret-key-for-production"
+    DB_PASSWORD="db$(date +%s)$(shuf -i 1000-9999 -n 1)"
+fi
 
 # 8. 创建环境变量文件
 echo "📝 8. 创建环境变量文件..."
@@ -228,11 +251,41 @@ echo "🔑 Secret Key: ${SECRET_KEY}"
 # 9. 构建和启动服务
 echo "🚀 9. 构建和启动服务..."
 docker-compose down 2>/dev/null || true
-docker-compose up --build -d
+
+# 构建镜像
+echo "📦 构建Docker镜像..."
+if ! docker-compose build; then
+    echo "❌ Docker镜像构建失败！"
+    echo "💡 查看错误日志："
+    echo "   docker-compose logs"
+    exit 1
+fi
+
+# 启动服务
+echo "🔄 启动Docker服务..."
+if ! docker-compose up -d; then
+    echo "❌ Docker服务启动失败！"
+    echo "💡 查看错误日志："
+    echo "   docker-compose logs"
+    exit 1
+fi
 
 # 10. 等待服务启动
 echo "⏳ 等待服务启动..."
 sleep 30
+
+# 检查服务是否正常运行
+echo "🔍 检查服务状态..."
+if ! docker-compose ps | grep -q "Up"; then
+    echo "❌ 服务启动异常！"
+    echo "📋 当前服务状态："
+    docker-compose ps
+    echo ""
+    echo "💡 查看详细日志："
+    echo "   docker-compose logs web"
+    echo "   docker-compose logs db"
+    exit 1
+fi
 
 # 11. 检查服务状态
 echo "📊 11. 检查服务状态..."
